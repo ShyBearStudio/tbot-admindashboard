@@ -1,10 +1,10 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/ShyBearStudio/tbot-admindashboard/data"
+	"github.com/ShyBearStudio/tbot-admindashboard/logger"
 )
 
 type routeFunc func(http.ResponseWriter, *http.Request)
@@ -34,7 +34,7 @@ func (endPoint *endPointDesc) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	user, err := sess.User()
 	if err != nil {
-		log.Fatal("Cannot file by session", err)
+		logger.Errorln("Cannot file by session", err)
 	}
 	endPoint.roleRouting[user.Role](w, r)
 }

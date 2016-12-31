@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ShyBearStudio/tbot-admindashboard/data"
+	"github.com/ShyBearStudio/tbot-admindashboard/logger"
 )
 
 var cmdLineArgs commandLineAgruments
@@ -26,8 +27,10 @@ func main() {
 	if err := loadConfig(*cmdLineArgs.config); err != nil {
 		return
 	}
-
-	if err := data.InitDb(config.DbConfig.Driver, config.DbConfig.ConnectionString); err != nil {
+	if err := logger.InitLog(config.Log.Dir); err != nil {
+		return
+	}
+	if err := data.InitDb(config.Db.Driver, config.Db.ConnectionString); err != nil {
 		return
 	}
 

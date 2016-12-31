@@ -2,35 +2,37 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"os"
+
+	"github.com/ShyBearStudio/tbot-admindashboard/logger"
 )
 
 type Config struct {
 	Address         string
 	StaticResources string
-	DbConfig        struct {
+	Db              struct {
 		Driver           string
 		ConnectionString string
 	}
+	Log struct {
+		Dir string
+	}
 }
 
-var config Config
+var config Config = Config{}
 
 func loadConfig(configFileName string) error {
 	_ = "breakpoint"
 	file, err := os.Open(configFileName)
 	if err != nil {
-		log.Fatalln("Cannot open configuration file", err)
+		logger.Errorln("Cannot open configuration file", err)
 		return err
 	}
 	jsonDecoder := json.NewDecoder(file)
-	config = Config{}
 	err = jsonDecoder.Decode(&config)
 	if err != nil {
-		log.Fatalf("Cannot get configuration from file '%s'...\n", configFileName)
+		logger.Errorln("Cannot get configuration from file", err)
 		return err
 	}
-
 	return nil
 }
