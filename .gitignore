@@ -27,3 +27,5 @@ _testmain.go
 *.exe~
 # godebugger
 *.debug
+# logs
+*.log
