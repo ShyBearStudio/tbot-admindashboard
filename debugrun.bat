@@ -1,0 +1,1 @@
+godebug build -instrument github.com/ShyBearStudio/tbot-admindashboard/data && tbot-admindashboard.debug -config configs/localconfig.json
