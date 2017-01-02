@@ -1,8 +1,8 @@
 drop table if exists sessions cascade;
 drop table if exists users cascade;
-drop type if exists user_role;
+/*drop type if exists user_role;
 
-create type user_role as enum('admin', 'user', 'role');
+create type user_role as enum('admin', 'user', 'role');*/
 
 create table users (
   id         serial primary key,
@@ -10,7 +10,7 @@ create table users (
   name       varchar(255),
   email      varchar(255) not null unique,
   password   varchar(255) not null,
-  role       user_role not null,
+  role       varchar(32) not null,
   created_at timestamp not null   
 );
 
