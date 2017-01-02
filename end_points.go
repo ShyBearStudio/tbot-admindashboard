@@ -1,61 +1,163 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ShyBearStudio/tbot-admindashboard/data"
 	"github.com/ShyBearStudio/tbot-admindashboard/logger"
 )
 
-type routeFunc func(http.ResponseWriter, *http.Request)
-
-type endPointDesc struct {
-	pattern       string
-	loginRequired bool
-	roleRouting   map[data.UserRoleType]routeFunc
+type endPoint struct {
+	pattern string
+	// method -> handler
+	routing map[string]http.Handler
 }
 
-func (endPoint *endPointDesc) addRoute(
-	role data.UserRoleType, route routeFunc) *endPointDesc {
-	endPoint.roleRouting[role] = route
-	return endPoint
+func newEndPoint(pattern string) endPoint {
+	ep := endPoint{}
+	ep.pattern = pattern
+	ep.routing = make(map[string]http.Handler)
+	return ep
 }
 
-func (endPoint *endPointDesc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !endPoint.loginRequired {
-		endPoint.roleRouting[data.AllRoles](w, r)
-		return
-	}
+type endPointId int
+
+func (id endPointId) String() string {
+	return fmt.Sprintf("%d", int(id))
+}
+
+const (
+	notFountEndPoint = iota + 1
+	indexEndPoint
+	loginEndPoint
+	authEndPoint
+	createAccountEndPoint
+	usersEndPoint
+)
+
+var endPoints = make(map[endPointId]endPoint)
+
+type handlerFunc func(http.ResponseWriter, *http.Request)
+
+type authEndPointHandler struct {
+	handler handlerFunc
+}
+
+func newAuthEndPointHandler() *authEndPointHandler {
+	h := new(authEndPointHandler)
+	return h
+}
+
+func (h *authEndPointHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	_ = "breakpoint"
+	h.handler(w, r)
+}
+
+type roleBasedEndPointHandler struct {
+	handler        map[data.UserRoleType]handlerFunc
+	defaultHandler handlerFunc
+}
+
+func newRoleBasedEndPointHandler() *roleBasedEndPointHandler {
+	h := new(roleBasedEndPointHandler)
+	h.handler = make(map[data.UserRoleType]handlerFunc)
+	return h
+}
+
+func (h *roleBasedEndPointHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	_ = "breakpoint"
+	var url = r.URL.Path[1:]
 	sess, err := session(r)
 	if err != nil {
-		redirect(w, r, endPoints.login)
+		logger.Warningf("Unauthorized access to '%s'", url)
+		redirect(loginEndPoint, w, r)
 		return
 	}
 
 	user, err := sess.User()
 	if err != nil {
-		logger.Errorln("Cannot file by session", err)
+		logger.Errorln("Cannot find user by session", err)
 	}
-	endPoint.roleRouting[user.Role](w, r)
+
+	handler, ok := h.handler[user.Role]
+	if !ok {
+		if h.defaultHandler != nil {
+			h.defaultHandler(w, r)
+			return
+		}
+
+		redirect(notFountEndPoint, w, r)
+		return
+	}
+	handler(w, r)
 }
 
-type endPointsList struct {
-	index endPointDesc
-	login endPointDesc
+func redirect(id endPointId, w http.ResponseWriter, r *http.Request) {
+	ep, ok := endPoints[id]
+	if !ok {
+		logger.Errorf("There is no endpoint with id: '%d'")
+		return
+	}
+	http.Redirect(w, r, ep.pattern, 302)
 }
-
-var endPoints endPointsList
 
 func init() {
-	endPoints = endPointsList{}
-	// Index end point
-	endPoints.index = endPointDesc{pattern: "/", loginRequired: true, roleRouting: make(map[data.UserRoleType]routeFunc)}
-	endPoints.index.addRoute(data.AllRoles, index)
-	// Login end point
-	endPoints.login = endPointDesc{pattern: "/login", loginRequired: false, roleRouting: make(map[data.UserRoleType]routeFunc)}
-	endPoints.login.addRoute(data.AllRoles, login)
+	endPoints[notFountEndPoint] = initNotFoundEndPoint()
+	endPoints[indexEndPoint] = initIndexEndPoint()
+	endPoints[loginEndPoint] = initLoginEndPoint()
+	endPoints[authEndPoint] = initAuthEndPoint()
+	endPoints[createAccountEndPoint] = initCreateAccountEndPoint()
+	endPoints[usersEndPoint] = initUsersEndPoint()
 }
 
-func redirect(w http.ResponseWriter, r *http.Request, endPoint endPointDesc) {
-	http.Redirect(w, r, endPoint.pattern, 302)
+func initNotFoundEndPoint() endPoint {
+	ep := newEndPoint("/not_found")
+	getRouting := newAuthEndPointHandler()
+	getRouting.handler = notFount
+	return ep
+}
+
+func initIndexEndPoint() endPoint {
+	ep := newEndPoint("/")
+	getRouting := newRoleBasedEndPointHandler()
+	getRouting.defaultHandler = index
+	ep.routing[http.MethodGet] = getRouting
+	return ep
+}
+
+func initLoginEndPoint() endPoint {
+	ep := newEndPoint("/login")
+	getRouting := newAuthEndPointHandler()
+	getRouting.handler = login
+	ep.routing[http.MethodGet] = getRouting
+	return ep
+}
+
+func initAuthEndPoint() endPoint {
+	ep := newEndPoint("/authenticate")
+	postRouting := newAuthEndPointHandler()
+	postRouting.handler = authenticate
+	ep.routing[http.MethodPost] = postRouting
+	return ep
+}
+
+func initCreateAccountEndPoint() endPoint {
+	ep := newEndPoint("/create_account")
+	getRouting := newRoleBasedEndPointHandler()
+	getRouting.handler[data.AdminRole] = createAccountGet
+	ep.routing[http.MethodGet] = getRouting
+	postRouting := newRoleBasedEndPointHandler()
+	postRouting.handler[data.AdminRole] = createAccountPost
+	ep.routing[http.MethodPost] = postRouting
+	return ep
+}
+
+func initUsersEndPoint() endPoint {
+	ep := newEndPoint("/users")
+	getRouting := newRoleBasedEndPointHandler()
+	getRouting.handler[data.AdminRole] = users
+	ep.routing[http.MethodGet] = getRouting
+	return ep
+
 }
