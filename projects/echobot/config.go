@@ -1,4 +1,4 @@
-package main
+package echobot
 
 import (
 	"encoding/json"
@@ -8,16 +8,14 @@ import (
 )
 
 type configuration struct {
-	Address         string
-	StaticResources string
-	Db              struct {
+	Token string
+	Db    struct {
 		Driver           string
 		ConnectionString string
 	}
 	Log struct {
 		Dir string
 	}
-	Tbots map[string]string
 }
 
 var config configuration = configuration{}

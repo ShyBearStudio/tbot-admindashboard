@@ -11,7 +11,7 @@ create table users (
   email      varchar(255) not null unique,
   password   varchar(255) not null,
   role       varchar(32) not null,
-  created_at timestamp not null   
+  created_at timestamp not null
 );
 
 create table sessions (

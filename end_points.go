@@ -34,6 +34,8 @@ const (
 	authEndPoint
 	createAccountEndPoint
 	usersEndPoint
+	projectsEndPoint
+	echoProjectEndPoint
 )
 
 var endPoints = make(map[endPointId]endPoint)
@@ -109,6 +111,8 @@ func init() {
 	endPoints[authEndPoint] = initAuthEndPoint()
 	endPoints[createAccountEndPoint] = initCreateAccountEndPoint()
 	endPoints[usersEndPoint] = initUsersEndPoint()
+	endPoints[projectsEndPoint] = initProjectsEndPoint()
+	endPoints[echoProjectEndPoint] = initEchoProjectEndPoint()
 }
 
 func initNotFoundEndPoint() endPoint {
@@ -159,5 +163,20 @@ func initUsersEndPoint() endPoint {
 	getRouting.handler[data.AdminRole] = users
 	ep.routing[http.MethodGet] = getRouting
 	return ep
+}
 
+func initProjectsEndPoint() endPoint {
+	ep := newEndPoint("/projects")
+	getRouting := newRoleBasedEndPointHandler()
+	getRouting.handler[data.AdminRole], getRouting.handler[data.UserRole] = projects, projects
+	ep.routing[http.MethodGet] = getRouting
+	return ep
+}
+
+func initEchoProjectEndPoint() endPoint {
+	ep := newEndPoint("/projects/echo")
+	getRouting := newRoleBasedEndPointHandler()
+	getRouting.handler[data.AdminRole], getRouting.handler[data.UserRole] = echoProject, echoProject
+	ep.routing[http.MethodGet] = getRouting
+	return ep
 }

@@ -10,7 +10,7 @@ go build && (
 )
 
 ECHO Run the application ...
-START tbot-admindashboard.exe -config configs/localconfig.json && (
+START tbot-admindashboard.exe -config configs/admindashboardconfig.json && (
 	ECHO === [done]
 ) || (
 	ECHO === [failed]

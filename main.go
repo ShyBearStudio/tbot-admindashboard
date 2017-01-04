@@ -34,6 +34,12 @@ func main() {
 	if err := data.InitDb(config.Db.Driver, config.Db.ConnectionString); err != nil {
 		return
 	}
+	if err := initTBots(config.Tbots); err != nil {
+		return
+	}
+	if err := startTBots(); err != nil {
+		return
+	}
 
 	r := registerEndPoints()
 	mux := http.NewServeMux()

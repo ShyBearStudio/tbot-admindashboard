@@ -11,7 +11,7 @@ import (
 func index(w http.ResponseWriter, r *http.Request) {
 	_ = "breakpoint"
 	fmt.Fprint(w, "access granted!\n")
-	fmt.Fprint(w, "Hello, World!")
+	fmt.Fprint(w, "Hello World!")
 }
 
 func notFount(w http.ResponseWriter, r *http.Request) {
@@ -25,5 +25,5 @@ func users(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Errorln("Cannot get all users", err)
 	}
-	generateHTML(w, &users, "login.layout", "users")
+	generateHTML(w, &users, "page.layout", "users")
 }

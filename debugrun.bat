@@ -1,1 +1,2 @@
-godebug build -instrument github.com/ShyBearStudio/tbot-admindashboard/data && tbot-admindashboard.debug -config configs/localconfig.json
+godebug build -instrument github.com/ShyBearStudio/tbot-admindashboard/data,github.com/ShyBearStudio/tbot-admindashboard/projects/echobot,github.com/ShyBearStudio/tbot-admindashboard/projects/echobot/data && ^
+tbot-admindashboard.debug -config configs/admindashboardconfig.json

@@ -1,0 +1,10 @@
+{
+  "Token" : "284008306:AAFJGz1VAwws1HLR7u5nIUn_wh4KHmCOh5E",
+  "Db" : { 
+    "Driver" : "postgres",
+    "ConnectionString" : "postgres://leabqlqclrgvcs:546b03954b61761cc2e3b2c0dbbfae83936db2fca407af6495ef41e2ada899aa@ec2-54-163-246-165.compute-1.amazonaws.com:5432/d7g3dt1edh1ta2"
+  },
+  "Log" : {
+    "Dir" : "logs/echobot"
+  }
+}
