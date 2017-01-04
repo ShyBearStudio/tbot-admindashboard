@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"net/http"
+	"os"
 
 	"github.com/ShyBearStudio/tbot-admindashboard/data"
 	"github.com/ShyBearStudio/tbot-admindashboard/logger"
@@ -49,8 +50,13 @@ func main() {
 		staticResourcesPrefix, http.StripPrefix(staticResourcesPrefix, staticFiles))
 	mux.Handle("/", r)
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	server := &http.Server{
-		Addr:           config.Address,
+		Addr:           ":" + port,
 		Handler:        mux,
 		MaxHeaderBytes: 1 << 20,
 	}
