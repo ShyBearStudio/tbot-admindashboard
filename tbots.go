@@ -5,6 +5,7 @@ import (
 
 	"github.com/ShyBearStudio/tbot-admindashboard/logger"
 	"github.com/ShyBearStudio/tbot-admindashboard/projects/echobot"
+	"github.com/ShyBearStudio/tbot-admindashboard/projects/tbot"
 )
 
 type tbotId string
@@ -14,7 +15,7 @@ const (
 	echoBotId      tbotId = "echobot"
 )
 
-var tbots = make(map[tbotId]echobot.TBot)
+var tbots = make(map[tbotId]tbot.TBot)
 
 func initTBots(tbotConfigs map[string]string) error {
 	for tbotName, configFileName := range tbotConfigs {
@@ -41,7 +42,7 @@ func toTBotId(s string) (id tbotId, err error) {
 	return undefinedBotId, fmt.Errorf("Unknown tbot id value: '%s'", s)
 }
 
-func initTBot(id tbotId, configFileName string) (echobot.TBot, error) {
+func initTBot(id tbotId, configFileName string) (tbot.TBot, error) {
 	switch id {
 	case echoBotId:
 		return echobot.New(configFileName)

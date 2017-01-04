@@ -1,4 +1,4 @@
-package data
+package echobot
 
 import (
 	"database/sql"
@@ -20,10 +20,10 @@ type Chat struct {
 }
 
 // chat registered?
-func IsRegisteredChat(id int) (is bool, err error) {
+func isRegisteredChat(db *sql.DB, id int) (is bool, err error) {
 	_ = "breakpoint"
 	var resultId int
-	err = Db.QueryRow("SELECT id FROM echobot_chats WHERE id = $1", id).
+	err = db.QueryRow("select id from echobot_chats where id = $1", id).
 		Scan(&resultId)
 	_ = "breakpoint"
 	if err == sql.ErrNoRows {
@@ -36,10 +36,10 @@ func IsRegisteredChat(id int) (is bool, err error) {
 }
 
 // add new chat
-func CreateChat(chat tbotapi.Chat) error {
+func createChat(db *sql.DB, chat tbotapi.Chat) error {
 	_ = "breakpoint"
 	statement := "insert into echobot_chats (id, type, title, username, firstname, lastname, created_at, active) values ($1, $2, $3, $4, $5, $6, $7, $8)"
-	stmt, err := Db.Prepare(statement)
+	stmt, err := db.Prepare(statement)
 	if err != nil {
 		return err
 	}
@@ -51,8 +51,8 @@ func CreateChat(chat tbotapi.Chat) error {
 
 // update chat status (ie from active=true to active=false)
 // get chats
-func Chats() (chats []Chat, err error) {
-	rows, err := Db.Query("SELECT id, type, title, username, firstname, lastname, created_at, active FROM echobot_chats")
+func chats(db *sql.DB) (chats []Chat, err error) {
+	rows, err := db.Query("SELECT id, type, title, username, firstname, lastname, created_at, active FROM echobot_chats")
 	if err != nil {
 		return
 	}

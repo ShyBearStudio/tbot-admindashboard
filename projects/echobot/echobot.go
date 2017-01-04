@@ -1,31 +1,36 @@
 package echobot
 
 import (
+	"database/sql"
 	"fmt"
 	"sync"
 
 	"github.com/ShyBearStudio/tbot-admindashboard/logger"
-	"github.com/ShyBearStudio/tbot-admindashboard/projects/echobot/data"
+	"github.com/ShyBearStudio/tbot-admindashboard/projects/data"
 	"github.com/mrd0ll4r/tbotapi"
 )
-
-type TBot interface {
-	Start() error
-	Stop() error
-}
 
 type EchoBot struct {
 	operMutex *sync.Mutex
 	isRunning bool
 	stopped   chan struct{}
+	db        *sql.DB
 }
 
 func New(configFileName string) (bot *EchoBot, err error) {
 	bot = new(EchoBot)
-	if err = initBot(configFileName); err != nil {
+	if err = loadConfig(configFileName); err != nil {
+		logger.Errorf("Cannot load configuration file with name '%s': %v", configFileName, err)
 		return
 	}
-
+	if err = logger.InitLog(config.Log.Dir); err != nil {
+		logger.Errorf("Cannot initialize logger with log files in dir '%s': ", config.Log.Dir, err)
+		return
+	}
+	if bot.db, err = data.InitDb(config.Db.Driver, config.Db.ConnectionString); err != nil {
+		logger.Errorf("Cannot initialize dababase (Driver: '%s' | ConnString: '%s'): ", config.Db.Driver, config.Db.ConnectionString, err)
+		return
+	}
 	bot.isRunning = false
 	bot.operMutex = new(sync.Mutex)
 	return
@@ -84,12 +89,12 @@ func (bot *EchoBot) RunBody(api *tbotapi.TelegramBotAPI, botUpdate tbotapi.BotUp
 			return
 		}
 
-		is, err := data.IsRegisteredChat(msg.Chat.ID)
+		is, err := isRegisteredChat(bot.db, msg.Chat.ID)
 		if err != nil {
 			logger.Errorf("Cannot check whether chat '%v' registered", msg.Chat)
 		}
 		if !is {
-			data.CreateChat(msg.Chat)
+			createChat(bot.db, msg.Chat)
 		}
 
 		// Now simply echo that back.
@@ -101,19 +106,6 @@ func (bot *EchoBot) RunBody(api *tbotapi.TelegramBotAPI, botUpdate tbotapi.BotUp
 	}
 }
 
-func initBot(congFileName string) error {
-	_ = "breakpoint"
-	if err := loadConfig(congFileName); err != nil {
-		logger.Errorf("Cannot load configuration file with name '%s': %v", congFileName, err)
-		return err
-	}
-	if err := logger.InitLog(config.Log.Dir); err != nil {
-		logger.Errorf("Cannot initialize logger with log files in dir '%s': ", config.Log.Dir, err)
-		return err
-	}
-	if err := data.InitDb(config.Db.Driver, config.Db.ConnectionString); err != nil {
-		logger.Errorf("Cannot initialize dababase (Driver: '%s' | ConnString: '%s'): ", config.Db.Driver, config.Db.ConnectionString, err)
-		return err
-	}
-	return nil
+func (bot *EchoBot) Chats() (chat []Chat, err error) {
+	return chats(bot.db)
 }
