@@ -15,7 +15,7 @@ var cmdLineArgs commandLineAgruments
 func init() {
 	cmdLineArgs = commandLineAgruments{}
 	cmdLineArgs.help = flag.Bool("help", false, "get help")
-	cmdLineArgs.config = flag.String("config", "config.json", "config file in JSON format")
+	cmdLineArgs.config = flag.String("config", "", "config file in JSON format")
 
 }
 
@@ -38,9 +38,9 @@ func main() {
 	if err := initTBots(config.Tbots); err != nil {
 		return
 	}
-	if err := startTBots(); err != nil {
-		return
-	}
+	//if err := startTBots(); err != nil {
+	//return
+	//}
 
 	r := registerEndPoints()
 	mux := http.NewServeMux()
