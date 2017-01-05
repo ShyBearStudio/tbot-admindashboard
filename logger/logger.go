@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -75,35 +76,50 @@ func logMsgF(logger *log.Logger, prefix string, f string, args ...interface{}) {
 	}
 }
 
-func InitLog(logDir string) error {
+func InitLogger(logDir string) error {
+	if len(logDir) == 0 {
+		return InitFileLogger(logDir)
+	}
+	return initStdLogger()
+}
+
+func InitFileLogger(logDir string) error {
 	var err error
-	traceLogger, err = newLevelLogger(logDir, traceFileName, tracePrefix)
+	trace, err := logFile(logDir, traceFileName)
 	if err != nil {
 		return err
 	}
-	infoLogger, err = newLevelLogger(logDir, infoFileName, infoPrefix)
+	warn, err := logFile(logDir, warningFileName)
 	if err != nil {
 		return err
 	}
-	warningLogger, err = newLevelLogger(logDir, warningFileName, warningPrefix)
+	info, err := logFile(logDir, infoFileName)
 	if err != nil {
 		return err
 	}
-	errorLogger, err = newLevelLogger(logDir, errorFileName, errorPrefix)
+	error, err := logFile(logDir, errorFileName)
 	if err != nil {
 		return err
 	}
+	initLogger(trace, warn, info, error)
 	return nil
 }
 
-func newLevelLogger(dir, name, prefix string) (levelLogger *log.Logger, err error) {
+func logFile(dir, name string) (file io.Writer, err error) {
 	os.MkdirAll(dir, os.ModePerm)
 	path := filepath.Join(dir, name)
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
-	if err != nil {
-		Errorln("Failure to open log file", err)
-		return
-	}
-	levelLogger = log.New(file, tracePrefix, logFormat)
+	file, err = os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	return
+}
+
+func initStdLogger() error {
+	initLogger(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
+	return nil
+}
+
+func initLogger(trace io.Writer, info io.Writer, warn io.Writer, error io.Writer) {
+	traceLogger = log.New(trace, tracePrefix, logFormat)
+	infoLogger = log.New(info, tracePrefix, logFormat)
+	warningLogger = log.New(warn, tracePrefix, logFormat)
+	errorLogger = log.New(error, tracePrefix, logFormat)
 }
