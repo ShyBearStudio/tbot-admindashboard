@@ -29,7 +29,7 @@ func main() {
 	if err := loadConfig(*cmdLineArgs.config); err != nil {
 		return
 	}
-	if err := logger.InitLog(config.Log.Dir); err != nil {
+	if err := logger.InitLogger(config.Log.Dir); err != nil {
 		return
 	}
 	if err := data.InitDb(config.Db.Driver, config.Db.ConnectionString); err != nil {
@@ -38,9 +38,9 @@ func main() {
 	if err := initTBots(config.Tbots); err != nil {
 		return
 	}
-	//if err := startTBots(); err != nil {
-	//return
-	//}
+	if err := startTBots(); err != nil {
+		return
+	}
 
 	r := registerEndPoints()
 	mux := http.NewServeMux()
