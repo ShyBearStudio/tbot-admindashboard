@@ -78,9 +78,9 @@ func logMsgF(logger *log.Logger, prefix string, f string, args ...interface{}) {
 
 func InitLogger(logDir string) error {
 	if len(logDir) == 0 {
-		return InitFileLogger(logDir)
+		return initStdLogger()
 	}
-	return initStdLogger()
+	return InitFileLogger(logDir)
 }
 
 func InitFileLogger(logDir string) error {

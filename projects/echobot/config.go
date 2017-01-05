@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	configEnvVarName string = "admindashboardconfig"
+	configEnvVarName string = "echobotconfig"
 )
 
 type configuration struct {
