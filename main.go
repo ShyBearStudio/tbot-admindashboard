@@ -15,7 +15,7 @@ var cmdLineArgs commandLineAgruments
 func init() {
 	cmdLineArgs = commandLineAgruments{}
 	cmdLineArgs.help = flag.Bool("help", false, "get help")
-	cmdLineArgs.config = flag.String("config", "config.json", "config file in JSON format")
+	cmdLineArgs.config = flag.String("config", "", "config file in JSON format")
 
 }
 
@@ -29,7 +29,7 @@ func main() {
 	if err := loadConfig(*cmdLineArgs.config); err != nil {
 		return
 	}
-	if err := logger.InitLog(config.Log.Dir); err != nil {
+	if err := logger.InitLogger(config.Log.Dir); err != nil {
 		return
 	}
 	if err := data.InitDb(config.Db.Driver, config.Db.ConnectionString); err != nil {

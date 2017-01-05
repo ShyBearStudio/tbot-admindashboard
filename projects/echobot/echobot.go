@@ -23,7 +23,7 @@ func New(configFileName string) (bot *EchoBot, err error) {
 		logger.Errorf("Cannot load configuration file with name '%s': %v", configFileName, err)
 		return
 	}
-	if err = logger.InitLog(config.Log.Dir); err != nil {
+	if err = logger.InitLogger(config.Log.Dir); err != nil {
 		logger.Errorf("Cannot initialize logger with log files in dir '%s': ", config.Log.Dir, err)
 		return
 	}
