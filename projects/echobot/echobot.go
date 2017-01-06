@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ShyBearStudio/tbot-admindashboard/configutils"
 	"github.com/ShyBearStudio/tbot-admindashboard/logger"
 	"github.com/ShyBearStudio/tbot-admindashboard/projects/data"
 	"github.com/mrd0ll4r/tbotapi"
@@ -19,7 +20,7 @@ type EchoBot struct {
 
 func New(configFileName string) (bot *EchoBot, err error) {
 	bot = new(EchoBot)
-	if err = loadConfig(configFileName); err != nil {
+	if err = configutils.LoadConfig(configFileName, configEnvVarName, &config); err != nil {
 		logger.Errorf("Cannot load configuration file with name '%s': %v", configFileName, err)
 		return
 	}

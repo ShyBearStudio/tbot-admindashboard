@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/ShyBearStudio/tbot-admindashboard/configutils"
 	"github.com/ShyBearStudio/tbot-admindashboard/data"
 	"github.com/ShyBearStudio/tbot-admindashboard/logger"
 	"github.com/gorilla/mux"
 )
 
 var cmdLineArgs commandLineAgruments
+var config = configuration{}
 
 func init() {
 	cmdLineArgs = commandLineAgruments{}
@@ -26,7 +28,7 @@ const (
 func main() {
 	_ = "breakpoint"
 	flag.Parse()
-	if err := loadConfig(*cmdLineArgs.config); err != nil {
+	if err := configutils.LoadConfig(*cmdLineArgs.config, configEnvVarName, &config); err != nil {
 		return
 	}
 	if err := logger.InitLogger(config.Log.Dir); err != nil {
