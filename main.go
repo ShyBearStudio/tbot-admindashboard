@@ -12,9 +12,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var cmdLineArgs commandLineAgruments
-var config = configuration{}
-
 type environment struct {
 	config    configuration
 	db        models.Datastore
@@ -34,7 +31,6 @@ const (
 
 func main() {
 	_ = "breakpoint"
-	flag.Parse()
 	env, err := newEnvironment()
 	if err != nil {
 		logger.Errorf("Cannot create environment: %v", err)
@@ -49,7 +45,7 @@ func main() {
 	r := registerEndPoints(env)
 	mux := http.NewServeMux()
 	// Add static resources
-	staticFiles := http.FileServer(http.Dir(config.StaticResources))
+	staticFiles := http.FileServer(http.Dir(env.config.StaticResources))
 	mux.Handle(
 		staticResourcesPrefix, http.StripPrefix(staticResourcesPrefix, staticFiles))
 	mux.Handle("/", r)
@@ -68,7 +64,8 @@ func main() {
 }
 
 func newEnvironment() (env *environment, err error) {
-	cmdLineArgs = newCmdLineArgs()
+	cmdLineArgs := newCmdLineArgs()
+	flag.Parse()
 	env = new(environment)
 	if err = configutils.LoadConfig(*cmdLineArgs.config, configEnvVarName, &env.config); err != nil {
 		logger.Errorf("Cannot load config: %v", err)
@@ -91,7 +88,7 @@ func newEnvironment() (env *environment, err error) {
 }
 
 func newCmdLineArgs() commandLineAgruments {
-	cmdLineArgs = commandLineAgruments{}
+	cmdLineArgs := commandLineAgruments{}
 	cmdLineArgs.help = flag.Bool("help", false, "get help")
 	cmdLineArgs.config = flag.String("config", "", "config file in JSON format")
 	flag.Parse()

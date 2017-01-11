@@ -72,6 +72,7 @@ func (bot *EchoBot) RunEngine() {
 			_ = "breakpoint"
 			return
 		case botUpdate := <-api.Updates:
+			_ = "breakpoint"
 			bot.RunBody(api, botUpdate)
 			fmt.Println("update processed")
 		}
@@ -100,6 +101,7 @@ func (bot *EchoBot) RunBody(api *tbotapi.TelegramBotAPI, botUpdate tbotapi.BotUp
 
 		// Now simply echo that back.
 		_, err = api.NewOutgoingMessage(tbotapi.NewRecipientFromChat(msg.Chat), *msg.Text).Send()
+		fmt.Printf("Send message: '%s'", *msg.Text)
 		if err != nil {
 			logger.Errorf("Error sending: %s\n", err)
 			return
