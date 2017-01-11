@@ -104,7 +104,6 @@ func (env *environment) redirect(id endPointId, w http.ResponseWriter, r *http.R
 	http.Redirect(w, r, ep.pattern, 302)
 }
 
-//func init() {
 func newEndpoins(env *environment) map[endPointId]endPoint {
 	endPoints := make(map[endPointId]endPoint)
 

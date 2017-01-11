@@ -15,23 +15,22 @@ const (
 	echoBotId      tbotId = "echobot"
 )
 
-var tbots = make(map[tbotId]tbot.TBot)
-
-func initTBots(tbotConfigs map[string]string) error {
+func newTBots(tbotConfigs map[string]string) (map[tbotId]tbot.TBot, error) {
+	tbots := make(map[tbotId]tbot.TBot)
 	for tbotName, configFileName := range tbotConfigs {
 		tbotId, err := toTBotId(tbotName)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		tbot, err := initTBot(tbotId, configFileName)
+		tbot, err := newTBot(tbotId, configFileName)
 		if err != nil {
 			logger.Errorf("Cannot initialized bot (Name: '%s' | Config: '%s'): %v", tbotName, configFileName, err)
-			return err
+			return nil, err
 		}
 		tbots[tbotId] = tbot
 	}
 
-	return nil
+	return tbots, nil
 }
 
 func toTBotId(s string) (id tbotId, err error) {
@@ -42,7 +41,7 @@ func toTBotId(s string) (id tbotId, err error) {
 	return undefinedBotId, fmt.Errorf("Unknown tbot id value: '%s'", s)
 }
 
-func initTBot(id tbotId, configFileName string) (tbot.TBot, error) {
+func newTBot(id tbotId, configFileName string) (tbot.TBot, error) {
 	switch id {
 	case echoBotId:
 		return echobot.New(configFileName)
@@ -50,8 +49,8 @@ func initTBot(id tbotId, configFileName string) (tbot.TBot, error) {
 	return nil, fmt.Errorf("There is no way to initialize tbot with id '%s'", id)
 }
 
-func startTBots() error {
-	for id, tbot := range tbots {
+func (env *environment) startTBots() error {
+	for id, tbot := range env.tbots {
 		err := tbot.Start()
 		if err != nil {
 			logger.Errorf("Cannot start tbot (id: '%s'): '%v'", id, err)

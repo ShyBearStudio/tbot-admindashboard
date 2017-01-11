@@ -8,6 +8,7 @@ import (
 	"github.com/ShyBearStudio/tbot-admindashboard/configutils"
 	"github.com/ShyBearStudio/tbot-admindashboard/logger"
 	"github.com/ShyBearStudio/tbot-admindashboard/models"
+	"github.com/ShyBearStudio/tbot-admindashboard/projects/tbot"
 	"github.com/gorilla/mux"
 )
 
@@ -18,6 +19,7 @@ type environment struct {
 	config    configuration
 	db        models.Datastore
 	endPoints map[endPointId]endPoint
+	tbots     map[tbotId]tbot.TBot
 }
 
 func init() {
@@ -39,19 +41,8 @@ func main() {
 		return
 	}
 
-	if err := configutils.LoadConfig(*cmdLineArgs.config, configEnvVarName, &config); err != nil {
-		return
-	}
-	if err := logger.InitLogger(config.Log.Dir); err != nil {
-		return
-	}
-	//if err := data.InitDb(config.Db.Driver, config.Db.ConnectionString); err != nil {
-	//	return
-	//}
-	if err := initTBots(config.Tbots); err != nil {
-		return
-	}
-	if err := startTBots(); err != nil {
+	if err := env.startTBots(); err != nil {
+		logger.Errorf("Cannot start tbots: %v", err)
 		return
 	}
 
@@ -92,6 +83,10 @@ func newEnvironment() (env *environment, err error) {
 		return nil, err
 	}
 	env.endPoints = newEndpoins(env)
+	if env.tbots, err = newTBots(env.config.Tbots); err != nil {
+		logger.Errorf("Cannot create tbots: %v", err)
+		return nil, err
+	}
 	return
 }
 
