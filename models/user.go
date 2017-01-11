@@ -70,7 +70,7 @@ type Session struct {
 	CreatedAt time.Time
 }
 
-func (db *Db) CreateSession(user User) (session Session, err error) {
+func (db *Db) CreateSession(user *User) (session Session, err error) {
 	statement := "insert into sessions (uuid, email, user_id, created_at) values ($1, $2, $3, $4) " +
 		"returning id, uuid, email, user_id, created_at"
 	stmt, err := db.Prepare(statement)
