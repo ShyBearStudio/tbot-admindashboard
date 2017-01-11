@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ShyBearStudio/tbot-admindashboard/data"
 	"github.com/ShyBearStudio/tbot-admindashboard/logger"
+	"github.com/ShyBearStudio/tbot-admindashboard/models"
 )
 
 type endPoint struct {
@@ -38,8 +38,6 @@ const (
 	echoProjectEndPoint
 )
 
-var endPoints = make(map[endPointId]endPoint)
-
 type handlerFunc func(http.ResponseWriter, *http.Request)
 
 type authEndPointHandler struct {
@@ -57,27 +55,29 @@ func (h *authEndPointHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 }
 
 type roleBasedEndPointHandler struct {
-	handler        map[data.UserRoleType]handlerFunc
+	env            *environment
+	handler        map[models.UserRoleType]handlerFunc
 	defaultHandler handlerFunc
 }
 
-func newRoleBasedEndPointHandler() *roleBasedEndPointHandler {
+func newRoleBasedEndPointHandler(env *environment) *roleBasedEndPointHandler {
 	h := new(roleBasedEndPointHandler)
-	h.handler = make(map[data.UserRoleType]handlerFunc)
+	h.env = env
+	h.handler = make(map[models.UserRoleType]handlerFunc)
 	return h
 }
 
 func (h *roleBasedEndPointHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_ = "breakpoint"
 	var url = r.URL.Path[1:]
-	sess, err := session(r)
+	sess, err := session(h.env, r)
 	if err != nil {
 		logger.Warningf("Unauthorized access to '%s'", url)
-		redirect(loginEndPoint, w, r)
+		h.env.redirect(loginEndPoint, w, r)
 		return
 	}
 
-	user, err := sess.User()
+	user, err := h.env.db.User(&sess)
 	if err != nil {
 		logger.Errorln("Cannot find user by session", err)
 	}
@@ -89,14 +89,14 @@ func (h *roleBasedEndPointHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		redirect(notFountEndPoint, w, r)
+		h.env.redirect(notFountEndPoint, w, r)
 		return
 	}
 	handler(w, r)
 }
 
-func redirect(id endPointId, w http.ResponseWriter, r *http.Request) {
-	ep, ok := endPoints[id]
+func (env *environment) redirect(id endPointId, w http.ResponseWriter, r *http.Request) {
+	ep, ok := env.endPoints[id]
 	if !ok {
 		logger.Errorf("There is no endpoint with id: '%d'")
 		return
@@ -104,79 +104,85 @@ func redirect(id endPointId, w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, ep.pattern, 302)
 }
 
-func init() {
-	endPoints[notFountEndPoint] = initNotFoundEndPoint()
-	endPoints[indexEndPoint] = initIndexEndPoint()
-	endPoints[loginEndPoint] = initLoginEndPoint()
-	endPoints[authEndPoint] = initAuthEndPoint()
-	endPoints[createAccountEndPoint] = initCreateAccountEndPoint()
-	endPoints[usersEndPoint] = initUsersEndPoint()
-	endPoints[projectsEndPoint] = initProjectsEndPoint()
-	endPoints[echoProjectEndPoint] = initEchoProjectEndPoint()
+func newEndpoins(env *environment) map[endPointId]endPoint {
+	endPoints := make(map[endPointId]endPoint)
+
+	endPoints[notFountEndPoint] = initNotFoundEndPoint(env)
+	endPoints[indexEndPoint] = initIndexEndPoint(env)
+	endPoints[loginEndPoint] = initLoginEndPoint(env)
+	endPoints[authEndPoint] = initAuthEndPoint(env)
+	endPoints[createAccountEndPoint] = initCreateAccountEndPoint(env)
+	endPoints[usersEndPoint] = initUsersEndPoint(env)
+	endPoints[projectsEndPoint] = initProjectsEndPoint(env)
+	endPoints[echoProjectEndPoint] = initEchoProjectEndPoint(env)
+
+	return endPoints
 }
 
-func initNotFoundEndPoint() endPoint {
+func initNotFoundEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/not_found")
 	getRouting := newAuthEndPointHandler()
-	getRouting.handler = notFount
+	getRouting.handler = env.notFount
 	return ep
 }
 
-func initIndexEndPoint() endPoint {
+func initIndexEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/")
-	getRouting := newRoleBasedEndPointHandler()
-	getRouting.defaultHandler = index
+	getRouting := newRoleBasedEndPointHandler(env)
+	getRouting.defaultHandler = env.index
 	ep.routing[http.MethodGet] = getRouting
 	return ep
 }
 
-func initLoginEndPoint() endPoint {
+func initLoginEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/login")
 	getRouting := newAuthEndPointHandler()
-	getRouting.handler = login
+	getRouting.handler = env.login
 	ep.routing[http.MethodGet] = getRouting
 	return ep
 }
 
-func initAuthEndPoint() endPoint {
+func initAuthEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/authenticate")
 	postRouting := newAuthEndPointHandler()
-	postRouting.handler = authenticate
+	postRouting.handler = env.authenticate
 	ep.routing[http.MethodPost] = postRouting
 	return ep
 }
 
-func initCreateAccountEndPoint() endPoint {
+func initCreateAccountEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/create_account")
-	getRouting := newRoleBasedEndPointHandler()
-	getRouting.handler[data.AdminRole] = createAccountGet
+	getRouting := newRoleBasedEndPointHandler(env)
+	getRouting.handler[models.AdminRole] = env.createAccountGet
 	ep.routing[http.MethodGet] = getRouting
-	postRouting := newRoleBasedEndPointHandler()
-	postRouting.handler[data.AdminRole] = createAccountPost
+	postRouting := newRoleBasedEndPointHandler(env)
+	postRouting.handler[models.AdminRole] = env.createAccountPost
 	ep.routing[http.MethodPost] = postRouting
 	return ep
 }
 
-func initUsersEndPoint() endPoint {
+func initUsersEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/users")
-	getRouting := newRoleBasedEndPointHandler()
-	getRouting.handler[data.AdminRole] = users
+	getRouting := newRoleBasedEndPointHandler(env)
+	getRouting.handler[models.AdminRole] = env.users
 	ep.routing[http.MethodGet] = getRouting
 	return ep
 }
 
-func initProjectsEndPoint() endPoint {
+func initProjectsEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/projects")
-	getRouting := newRoleBasedEndPointHandler()
-	getRouting.handler[data.AdminRole], getRouting.handler[data.UserRole] = projects, projects
+	getRouting := newRoleBasedEndPointHandler(env)
+	getRouting.handler[models.AdminRole] = env.projects
+	getRouting.handler[models.UserRole] = env.projects
 	ep.routing[http.MethodGet] = getRouting
 	return ep
 }
 
-func initEchoProjectEndPoint() endPoint {
+func initEchoProjectEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/projects/echo")
-	getRouting := newRoleBasedEndPointHandler()
-	getRouting.handler[data.AdminRole], getRouting.handler[data.UserRole] = echoProject, echoProject
+	getRouting := newRoleBasedEndPointHandler(env)
+	getRouting.handler[models.AdminRole] = env.echoProject
+	getRouting.handler[models.UserRole] = env.echoProject
 	ep.routing[http.MethodGet] = getRouting
 	return ep
 }

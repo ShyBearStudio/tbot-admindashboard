@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ShyBearStudio/tbot-admindashboard/data"
+	"github.com/ShyBearStudio/tbot-admindashboard/models"
 )
 
 // Checks if the user is logged in and has a session, if not err is not nil
-func session(r *http.Request) (sess data.Session, err error) {
+func session(env *environment, r *http.Request) (sess models.Session, err error) {
 	_ = "breakpoint"
 	cookie, err := sessionCookie(r)
 	fmt.Printf("cookie: %v\n", cookie)
 	if err == nil {
-		sess = data.Session{Uuid: cookie.Value}
-		if ok, _ := sess.Check(); !ok {
+		sess = models.Session{Uuid: cookie.Value}
+		if ok, _ := env.db.CheckSession(&sess); !ok {
 			err = errors.New("Invalid session")
 		}
 	}

@@ -7,12 +7,12 @@ import (
 	"github.com/ShyBearStudio/tbot-admindashboard/projects/echobot"
 )
 
-func projects(w http.ResponseWriter, r *http.Request) {
+func (env *environment) projects(w http.ResponseWriter, r *http.Request) {
 	generateHTML(w, nil, "page.layout", "projects")
 }
 
-func echoProject(w http.ResponseWriter, r *http.Request) {
-	echoBot := tbots[echoBotId].(*echobot.EchoBot)
+func (env *environment) echoProject(w http.ResponseWriter, r *http.Request) {
+	echoBot := env.tbots[echoBotId].(*echobot.EchoBot)
 	chats, err := echoBot.Chats()
 	if err != nil {
 		logger.Errorf("Cannot get chats: %v", err)

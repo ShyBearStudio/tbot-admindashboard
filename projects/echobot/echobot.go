@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ShyBearStudio/tbot-admindashboard/configutils"
 	"github.com/ShyBearStudio/tbot-admindashboard/logger"
 	"github.com/ShyBearStudio/tbot-admindashboard/projects/data"
 	"github.com/mrd0ll4r/tbotapi"
@@ -19,7 +20,7 @@ type EchoBot struct {
 
 func New(configFileName string) (bot *EchoBot, err error) {
 	bot = new(EchoBot)
-	if err = loadConfig(configFileName); err != nil {
+	if err = configutils.LoadConfig(configFileName, configEnvVarName, &config); err != nil {
 		logger.Errorf("Cannot load configuration file with name '%s': %v", configFileName, err)
 		return
 	}
@@ -71,6 +72,7 @@ func (bot *EchoBot) RunEngine() {
 			_ = "breakpoint"
 			return
 		case botUpdate := <-api.Updates:
+			_ = "breakpoint"
 			bot.RunBody(api, botUpdate)
 			fmt.Println("update processed")
 		}
@@ -99,6 +101,7 @@ func (bot *EchoBot) RunBody(api *tbotapi.TelegramBotAPI, botUpdate tbotapi.BotUp
 
 		// Now simply echo that back.
 		_, err = api.NewOutgoingMessage(tbotapi.NewRecipientFromChat(msg.Chat), *msg.Text).Send()
+		fmt.Printf("Send message: '%s'", *msg.Text)
 		if err != nil {
 			logger.Errorf("Error sending: %s\n", err)
 			return
