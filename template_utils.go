@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+
+	"github.com/ShyBearStudio/tbot-admindashboard/logger"
 )
 
 func parseTemplateFiles(filenames ...string) (t *template.Template) {
@@ -17,6 +19,13 @@ func parseTemplateFiles(filenames ...string) (t *template.Template) {
 }
 
 func generateHTML(w http.ResponseWriter, data interface{}, filenames ...string) {
+	if len(filenames) == 0 {
+		if data != nil {
+			logger.Warningln("File names list is empty but data is not empty")
+		}
+		return
+
+	}
 	var files []string
 	for _, file := range filenames {
 		files = append(files, fmt.Sprintf("templates/%s.html", file))

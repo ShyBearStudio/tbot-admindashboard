@@ -19,12 +19,6 @@ type environment struct {
 	tbots     map[tbotId]tbot.TBot
 }
 
-func init() {
-	//cmdLineArgs = commandLineAgruments{}
-	//cmdLineArgs.help = flag.Bool("help", false, "get help")
-	//cmdLineArgs.config = flag.String("config", "", "config file in JSON format")
-}
-
 const (
 	staticResourcesPrefix string = "/static/"
 )
@@ -103,7 +97,6 @@ func registerEndPoints(env *environment) *mux.Router {
 		}
 	}
 
-	r.NotFoundHandler = http.HandlerFunc(env.notFount)
-
+	r.NotFoundHandler = http.HandlerFunc(env.notFoundBody)
 	return r
 }

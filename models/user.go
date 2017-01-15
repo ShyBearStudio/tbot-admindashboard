@@ -97,12 +97,12 @@ func (db *Db) CheckSession(session *Session) (valid bool, err error) {
 	return
 }
 
-func (db *Db) User(session *Session) (user User, err error) {
-	user = User{}
-	err = db.QueryRow("SELECT id, uuid, name, email, password, role, created_at FROM users WHERE id = $1",
+func (db *Db) User(session *Session) (*User, error) {
+	user := User{}
+	err := db.QueryRow("SELECT id, uuid, name, email, password, role, created_at FROM users WHERE id = $1",
 		session.UserId).
 		Scan(&user.Id, &user.Uuid, &user.Name, &user.Email, &user.Password, &user.Role, &user.CreatedAt)
-	return
+	return &user, err
 }
 
 func (db *Db) UserByEmail(email string) (user User, err error) {

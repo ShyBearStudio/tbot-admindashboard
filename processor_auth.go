@@ -8,14 +8,13 @@ import (
 	"github.com/ShyBearStudio/tbot-admindashboard/models"
 )
 
-func (env *environment) login(w http.ResponseWriter, r *http.Request) {
-	t := parseTemplateFiles("login.layout", "login")
-	t.Execute(w, nil)
+func (env *environment) login(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+	return nil, nil
 }
 
 // POST /authenticate
 // Authenticate the user given the email and password
-func (env *environment) authenticate(w http.ResponseWriter, r *http.Request) {
+func (env *environment) authenticate(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	_ = "breakpoint"
 	err := r.ParseForm()
 	if err != nil {
@@ -44,14 +43,10 @@ func (env *environment) authenticate(w http.ResponseWriter, r *http.Request) {
 		logger.Errorf("Incorrect password for user '%v'", user)
 		env.redirect(loginEndPoint, w, r)
 	}
+	return nil, err
 }
 
-func (env *environment) createAccountGet(w http.ResponseWriter, r *http.Request) {
-	_ = "breakpoint"
-	generateHTML(w, nil, "login.layout", "create_account")
-}
-
-func (env *environment) createAccountPost(w http.ResponseWriter, r *http.Request) {
+func (env *environment) createAccountPost(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	err := r.ParseForm()
 	if err != nil {
 		logger.Errorln("Cannot parse create acccount form", err)
@@ -69,4 +64,5 @@ func (env *environment) createAccountPost(w http.ResponseWriter, r *http.Request
 	}
 	logger.Tracef("Account with '%d' created", userId)
 	env.redirect(indexEndPoint, w, r)
+	return nil, nil
 }
