@@ -93,7 +93,7 @@ func (h *roleBasedEndPointHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	processor := h.RouteProcessor(user.Role)
+	processor := h.routeProcessor(user.Role)
 	if processor == nil {
 		h.env.redirect(notFountEndPoint, w, r)
 		return
@@ -103,7 +103,8 @@ func (h *roleBasedEndPointHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		logger.Errorln(err)
 	}
-	generateHTML(w, data, h.htmlFileNames...)
+	htmls := append(h.htmlFileNames, h.navBar(user.Role))
+	generateHTML(w, data, htmls...)
 }
 
 func (h *roleBasedEndPointHandler) User(r *http.Request) (user *models.User, err error) {
@@ -116,12 +117,25 @@ func (h *roleBasedEndPointHandler) User(r *http.Request) (user *models.User, err
 	return
 }
 
-func (h *roleBasedEndPointHandler) RouteProcessor(role models.UserRoleType) processorFunc {
+func (h *roleBasedEndPointHandler) routeProcessor(role models.UserRoleType) processorFunc {
 	processor, ok := h.processors[role]
 	if !ok && h.defaultHandler != nil {
 		processor = h.defaultHandler
 	}
 	return processor
+}
+
+func (h *roleBasedEndPointHandler) navBar(role models.UserRoleType) string {
+	_ = "breakpoint"
+	switch role {
+	case models.AdminRole:
+		return "admin.navbar"
+	case models.UserRole:
+		return "user.navbar"
+	default:
+		logger.Errorf("Undefined user role: %v", role)
+		return ""
+	}
 }
 
 func (env *environment) redirect(id endPointId, w http.ResponseWriter, r *http.Request) {
@@ -157,7 +171,7 @@ func initNotFoundEndPoint(env *environment) endPoint {
 
 func initIndexEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/")
-	getRouting := newRoleBasedEndPointHandler(env, "navbar", "page.layout", "index")
+	getRouting := newRoleBasedEndPointHandler(env, "page.layout", "index")
 	getRouting.defaultHandler = env.emptyProcessor
 	ep.routing[http.MethodGet] = getRouting
 	return ep
@@ -196,8 +210,8 @@ func initCreateAccountEndPoint(env *environment) endPoint {
 func initUsersEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/users")
 	getRouting := newRoleBasedEndPointHandler(
-		env, "navbar", "page.layout", "users")
-	getRouting.processors[models.AdminRole] = env.users
+		env, "page.layout", "users")
+	getRouting.defaultHandler = env.users
 	ep.routing[http.MethodGet] = getRouting
 	return ep
 }
@@ -205,9 +219,8 @@ func initUsersEndPoint(env *environment) endPoint {
 func initProjectsEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/projects")
 	getRouting := newRoleBasedEndPointHandler(
-		env, "navbar", "page.layout", "projects")
-	getRouting.processors[models.AdminRole] = env.emptyProcessor
-	getRouting.processors[models.UserRole] = env.emptyProcessor
+		env, "page.layout", "projects")
+	getRouting.defaultHandler = env.emptyProcessor
 	ep.routing[http.MethodGet] = getRouting
 	return ep
 }
@@ -215,9 +228,8 @@ func initProjectsEndPoint(env *environment) endPoint {
 func initEchoProjectEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/projects/echo")
 	getRouting := newRoleBasedEndPointHandler(
-		env, "navbar", "page.layout", "echobot_chats")
-	getRouting.processors[models.AdminRole] = env.echoProject
-	getRouting.processors[models.UserRole] = env.echoProject
+		env, "page.layout", "echobot_chats")
+	getRouting.defaultHandler = env.echoProject
 	ep.routing[http.MethodGet] = getRouting
 	return ep
 }
