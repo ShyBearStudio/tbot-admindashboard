@@ -7,14 +7,6 @@ import (
 	"github.com/ShyBearStudio/tbot-admindashboard/logger"
 )
 
-func (env *environment) index(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	_ = "breakpoint"
-	fmt.Fprint(w, "access granted!\n")
-	fmt.Fprint(w, "Hello World!")
-	generateHTML(w, nil, "navbar", "page.layout")
-	return nil, nil
-}
-
 func (env *environment) notFoundBody(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprintf(w, "Not found Page (404)!")

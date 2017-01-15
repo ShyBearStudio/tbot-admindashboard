@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"time"
@@ -70,7 +71,7 @@ type Session struct {
 	CreatedAt time.Time
 }
 
-func (db *Db) CreateSession(user *User) (session Session, err error) {
+func (db *Db) CreateSession(user *User) (session *Session, err error) {
 	statement := "insert into sessions (uuid, email, user_id, created_at) values ($1, $2, $3, $4) " +
 		"returning id, uuid, email, user_id, created_at"
 	stmt, err := db.Prepare(statement)
@@ -78,10 +79,22 @@ func (db *Db) CreateSession(user *User) (session Session, err error) {
 		return
 	}
 	defer stmt.Close()
+	session = new(Session)
 	// use QueryRow to return a row and scan the returned id into the Session struct
 	err = stmt.QueryRow(
 		uuid.NewV4(), user.Email, user.Id, time.Now()).Scan(
 		&session.Id, &session.Uuid, &session.Email, &session.UserId, &session.CreatedAt)
+	return
+}
+
+func (db *Db) DeleteSession(session *Session) (err error) {
+	statement := "delete from sessions where uuid = $1"
+	stmt, err := db.Prepare(statement)
+	if err != nil {
+		return
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(session.Uuid)
 	return
 }
 
@@ -93,6 +106,9 @@ func (db *Db) CheckSession(session *Session) (valid bool, err error) {
 		Scan(&session.Id, &session.Uuid, &session.Email, &session.UserId, &session.CreatedAt)
 	if err == nil && session.Id != 0 {
 		valid = true
+	} else if err == sql.ErrNoRows {
+		valid = false
+		err = nil
 	}
 	return
 }
@@ -105,15 +121,15 @@ func (db *Db) User(session *Session) (*User, error) {
 	return &user, err
 }
 
-func (db *Db) UserByEmail(email string) (user User, err error) {
-	user = User{}
+func (db *Db) UserByEmail(email string) (user *User, err error) {
+	user = new(User)
 	err = db.QueryRow("SELECT id, uuid, name, email, password, role, created_at FROM users WHERE email = $1", email).
 		Scan(&user.Id, &user.Uuid, &user.Name, &user.Email, &user.Password, &user.Role, &user.CreatedAt)
 	return
 }
 
 // Adds a new user, save user info into the database
-func (db *Db) AddUser(name, email, password string, role UserRoleType) (user User, err error) {
+func (db *Db) AddUser(name, email, password string, role UserRoleType) (user *User, err error) {
 	_ = "breakpoint"
 	stmt, err := db.Prepare("insert into users (uuid, name, email, password, role, created_at) " +
 		"values ($1, $2, $3, $4, $5, $6) returning id, uuid, password, created_at")
@@ -121,21 +137,24 @@ func (db *Db) AddUser(name, email, password string, role UserRoleType) (user Use
 		return
 	}
 	defer stmt.Close()
-	user = User{Name: name, Email: email, Role: role}
+	user = new(User)
+	user.Name = name
+	user.Email = email
+	user.Role = role
 	// use QueryRow to return a row and scan the returned id into the User struct
 	err = stmt.QueryRow(uuid.NewV4(), name, email, dbutils.Encrypt(password), role, time.Now()).
 		Scan(&user.Id, &user.Uuid, &user.Password, &user.CreatedAt)
 	return
 }
 
-func (db *Db) Users() (users []User, err error) {
+func (db *Db) Users() (users []*User, err error) {
 	rows, err := db.Query(
 		"SELECT id, uuid, name, email, password, role, created_at FROM users")
 	if err != nil {
 		return
 	}
 	for rows.Next() {
-		user := User{}
+		user := new(User)
 		if err = rows.Scan(
 			&user.Id, &user.Uuid, &user.Name, &user.Email, &user.Password, &user.Role, &user.CreatedAt); err != nil {
 			return

@@ -8,12 +8,13 @@ import (
 )
 
 type Datastore interface {
-	CreateSession(*User) (Session, error)
+	CreateSession(*User) (*Session, error)
+	DeleteSession(*Session) error
 	CheckSession(*Session) (bool, error)
 	User(*Session) (*User, error)
-	UserByEmail(string) (User, error)
-	AddUser(string, string, string, UserRoleType) (User, error)
-	Users() ([]User, error)
+	UserByEmail(string) (*User, error)
+	AddUser(string, string, string, UserRoleType) (*User, error)
+	Users() ([]*User, error)
 }
 
 type Db struct {

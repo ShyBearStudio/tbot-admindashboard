@@ -28,7 +28,7 @@ func (env *environment) authenticate(w http.ResponseWriter, r *http.Request) (in
 	}
 	logger.Tracef("Try to authenticate user '%v'.", user)
 	if user.Password == dbutils.Encrypt(r.PostFormValue("password")) {
-		session, err := env.db.CreateSession(&user)
+		session, err := env.db.CreateSession(user)
 		if err != nil {
 			logger.Errorln("Cannot create session", err)
 		}
@@ -65,4 +65,17 @@ func (env *environment) createAccountPost(w http.ResponseWriter, r *http.Request
 	logger.Tracef("Account with '%d' created", userId)
 	env.redirect(indexEndPoint, w, r)
 	return nil, nil
+}
+
+func (env *environment) logout(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+	session, err := session(env, r)
+	if err != nil {
+		logger.Errorf("Cannot get user session: %v", err)
+	}
+	err = env.db.DeleteSession(session)
+	if err != nil {
+		logger.Errorf("Cannot remove user session: %v", err)
+	}
+	env.redirect(loginEndPoint, w, r)
+	return nil, err
 }

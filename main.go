@@ -96,7 +96,6 @@ func registerEndPoints(env *environment) *mux.Router {
 			r.Handle(ep.pattern, handler).Methods(method)
 		}
 	}
-
 	r.NotFoundHandler = http.HandlerFunc(env.notFoundBody)
 	return r
 }

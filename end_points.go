@@ -31,6 +31,7 @@ const (
 	notFountEndPoint = iota + 1
 	indexEndPoint
 	loginEndPoint
+	logoutEndPoint
 	authEndPoint
 	createAccountEndPoint
 	usersEndPoint
@@ -111,7 +112,7 @@ func (h *roleBasedEndPointHandler) User(r *http.Request) (user *models.User, err
 		logger.Warningf("Unauthorized access to '%s'", r.URL.Path[1:])
 		return nil, err
 	}
-	user, err = h.env.db.User(&sess)
+	user, err = h.env.db.User(sess)
 	return
 }
 
@@ -138,6 +139,7 @@ func newEndpoins(env *environment) map[endPointId]endPoint {
 	endPoints[notFountEndPoint] = initNotFoundEndPoint(env)
 	endPoints[indexEndPoint] = initIndexEndPoint(env)
 	endPoints[loginEndPoint] = initLoginEndPoint(env)
+	endPoints[logoutEndPoint] = initLogoutEndPoint(env)
 	endPoints[authEndPoint] = initAuthEndPoint(env)
 	endPoints[createAccountEndPoint] = initCreateAccountEndPoint(env)
 	endPoints[usersEndPoint] = initUsersEndPoint(env)
@@ -155,8 +157,8 @@ func initNotFoundEndPoint(env *environment) endPoint {
 
 func initIndexEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/")
-	getRouting := newRoleBasedEndPointHandler(env)
-	getRouting.defaultHandler = env.index
+	getRouting := newRoleBasedEndPointHandler(env, "navbar", "page.layout", "index")
+	getRouting.defaultHandler = env.emptyProcessor
 	ep.routing[http.MethodGet] = getRouting
 	return ep
 }
@@ -165,6 +167,12 @@ func initLoginEndPoint(env *environment) endPoint {
 	ep := newEndPoint("/login")
 	ep.routing[http.MethodGet] = newAuthEndPointHandler(
 		env, env.login, "login.layout", "login")
+	return ep
+}
+
+func initLogoutEndPoint(env *environment) endPoint {
+	ep := newEndPoint("/logout")
+	ep.routing[http.MethodGet] = newAuthEndPointHandler(env, env.logout)
 	return ep
 }
 

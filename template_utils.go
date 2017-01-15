@@ -19,6 +19,7 @@ func parseTemplateFiles(filenames ...string) (t *template.Template) {
 }
 
 func generateHTML(w http.ResponseWriter, data interface{}, filenames ...string) {
+	_ = "breakpoint"
 	if len(filenames) == 0 {
 		if data != nil {
 			logger.Warningln("File names list is empty but data is not empty")
@@ -30,7 +31,6 @@ func generateHTML(w http.ResponseWriter, data interface{}, filenames ...string) 
 	for _, file := range filenames {
 		files = append(files, fmt.Sprintf("templates/%s.html", file))
 	}
-
 	templates := template.Must(template.ParseFiles(files...))
 	templates.ExecuteTemplate(w, "layout", data)
 }
